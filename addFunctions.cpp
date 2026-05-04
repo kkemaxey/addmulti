@@ -93,10 +93,7 @@ fraction FractionList::add()
         sum.wholeNumber += sum.numerator / sum.denominator;
         sum.numerator    = sum.numerator % sum.denominator;
     }
-    int g = GCD(sum.numerator, sum.denominator);
-    sum.numerator   /= g;
-    sum.denominator /= g;
-
+    simplify(sum);
     return sum;
 }
 
@@ -126,10 +123,7 @@ fraction FractionList::multiply()
     product.numerator   = numerator % denominator;
     product.denominator = denominator;
 
-    int g = GCD(product.numerator, product.denominator);
-    product.numerator   /= g;
-    product.denominator /= g;
-
+    simplify(product);
     return product;
 }
 
@@ -173,6 +167,19 @@ void display(FractionList list, fraction ans, int op)
 
     (ans.wholeNumber != 0 ? cout << ans.wholeNumber : cout)
         << "(" << ans.numerator << "/" << ans.denominator << ")" << endl;
+}
+
+
+//--------------------------------------------------------
+// Divides numerator and denominator by their GCD in place
+//--------------------------------------------------------
+
+void simplify(fraction& f)
+{
+    if (f.denominator == 0) return;
+    int g = GCD(f.numerator, f.denominator);
+    f.numerator /= g;
+    f.denominator /= g;
 }
 
 

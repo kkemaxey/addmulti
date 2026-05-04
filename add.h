@@ -37,6 +37,7 @@ class FractionList
 
 bool checkFractionParts(char bar, char slash, int denominator);
 void display(FractionList, fraction, int);
+void simplify(fraction& f);
 int GCD(int, int);
 int LCM(int, int);
 
