@@ -16,8 +16,8 @@ void FractionList::getInput()
     {
         char bar;
         char slash;
-        int num;
-        int den;
+        unsigned long long num;
+        unsigned long long den;
         bool valid = false;
 
         while (!valid)
@@ -53,70 +53,89 @@ void FractionList::getInput()
 // Validates bar, slash, and denominator after tokenized >> reads
 //---------------------------------------------------------------
 
-bool checkFractionParts(char bar, char slash, int denominator)
+bool checkFractionParts(char bar, char slash, unsigned long long denominator)
 {
     return bar == '|' && slash == '/' && denominator != 0;
 }
 
 
-//------------------------------------------------------------------
-// Adds MAX_SIZE mixed number fractions using the mixed number method:
-// 1. Sum whole number parts separately
-// 2. Find LCD across all denominators
-// 3. Convert and sum all numerators
-// 4. Carry any overflow back into the whole number
-// 5. Simplify via GCD
-//------------------------------------------------------------------
+//--------------------------------------------------------------------
+// Accumulates a running fraction across all inputs using the formula:
+// a/b + c/d = (a * (d/g)) + (c * (b/g)) / b * (d/g)
+// where g = GCD(b, d). Simplifies after every step to keep
+// intermediate values small and prevent overflow.
+// Once accumulated, decomposes the result into a mixed number.
+//--------------------------------------------------------------------
 
 fraction FractionList::add()
 {
-    fraction sum;
-    for (int i = 0; i < size; i++)
-    {
-        sum.wholeNumber += fractions[i].wholeNumber;
-    }
-
-    int lcd = fractions[0].denominator;
-    for (int i = 1; i < size; i++)
-    {
-        lcd = LCM(lcd, fractions[i].denominator);
-    }
-    sum.denominator = lcd;
+    fraction running;
+    unsigned long long num = 0;
+    unsigned long long den = 1;
 
     for (int i = 0; i < size; i++)
     {
-        sum.numerator += fractions[i].numerator * (lcd / fractions[i].denominator);
+        const unsigned long long a = num;
+        const unsigned long long b = den;
+        const unsigned long long c = fractions[i].wholeNumber * fractions[i].denominator + fractions[i].numerator;
+        const unsigned long long d = fractions[i].denominator;
+
+        const unsigned long long g = GCD(b, d);
+        const unsigned long long bReduced = b / g;
+        const unsigned long long dReduced = d / g;
+
+        num = a * dReduced + c * bReduced;
+        den = bReduced * d;
+
+        const unsigned long long g2 = GCD(num, den);
+        num /= g2;
+        den /= g2;
     }
 
-    if (sum.numerator >= sum.denominator)
-    {
-        sum.wholeNumber += sum.numerator / sum.denominator;
-        sum.numerator    = sum.numerator % sum.denominator;
-    }
-    simplify(sum);
-    return sum;
+    running.wholeNumber = num / den;
+    running.numerator = num % den;
+    running.denominator = den;
+    simplify(running);
+    return running;
 }
 
 
 //------------------------------------------------------------------
-// Multiplies MAX_SIZE mixed number fractions:
-// 1. Convert each mixed number to improper form temporarily
-// 2. Multiply all numerators and denominators
-// 3. Extract whole number from result
-// 4. Simplify via GCD
+// Accumulates a running product across all inputs using
+// cross-cancellation before each multiplication step:
+// 1. Convert current fraction to improper form (whole * den + num)
+// 2. Cancel GCD(running numerator, incoming denominator)
+// 3. Cancel GCD(incoming numerator, running denominator)
+// 4. Multiply reduced values into running totals
+// 5. Simplify after each step to prevent overflow
+// Once accumulated, decomposes the result into a mixed number.
 //------------------------------------------------------------------
 
 fraction FractionList::multiply()
 {
     fraction product;
-    int numerator   = 1;
-    int denominator = 1;
+    unsigned long long numerator   = 1;
+    unsigned long long denominator = 1;
 
     for (int i = 0; i < size; i++)
     {
-        int improperNumerator = fractions[i].wholeNumber * fractions[i].denominator + fractions[i].numerator;
-        numerator   *= improperNumerator;
-        denominator *= fractions[i].denominator;
+        unsigned long long c = fractions[i].wholeNumber * fractions[i].denominator + fractions[i].numerator;
+        unsigned long long d = fractions[i].denominator;
+
+        const unsigned long long g1 = GCD(numerator, d);
+        numerator /= g1;
+        d /= g1;
+
+        const unsigned long long g2 = GCD(c, denominator);
+        c /= g2;
+        denominator /= g2;
+
+        numerator *= c;
+        denominator *= d;
+
+        const unsigned long long g3 = GCD(numerator, denominator);
+        numerator /= g3;
+        denominator /= g3;
     }
 
     product.wholeNumber = numerator / denominator;
@@ -177,7 +196,7 @@ void display(FractionList list, fraction ans, int op)
 void simplify(fraction& f)
 {
     if (f.denominator == 0) return;
-    int g = GCD(f.numerator, f.denominator);
+    unsigned long long g = GCD(f.numerator, f.denominator);
     f.numerator /= g;
     f.denominator /= g;
 }
@@ -187,7 +206,7 @@ void simplify(fraction& f)
 // Recursively finds the greatest common divisor of two integers
 //--------------------------------------------------------------
 
-int GCD(int a, int b)
+unsigned long long GCD(unsigned long long a, unsigned long long b)
 {
     if (b == 0)
     {
@@ -204,7 +223,7 @@ int GCD(int a, int b)
 // Finds the least common multiple of two integers using GCD
 //----------------------------------------------------------
 
-int LCM(int a, int b)
+unsigned long long LCM(unsigned long long a, unsigned long long b)
 {
     return (a / GCD(a, b)) * b;
 }
