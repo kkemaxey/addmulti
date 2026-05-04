@@ -35,7 +35,7 @@ class FractionList
         int getSize() const;
 };
 
-bool checkInput(string);
+bool checkFractionParts(char bar, char slash, int denominator);
 void display(FractionList, fraction, int);
 int GCD(int, int);
 int LCM(int, int);

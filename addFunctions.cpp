@@ -1,4 +1,5 @@
 #include <iostream>
+#include <limits>
 #include <string>
 #include "add.h"
 using namespace std;
@@ -9,72 +10,52 @@ using namespace std;
 
 void FractionList::getInput()
 {
-    cout << "Enter " << size << " fractions (format: whole | numerator/denominator):" << endl;
+    cout << "Enter " << size << " proper fractions:" << endl;
 
     for (int i = 0; i < size; i++)
     {
         char bar;
-        string fracString;
+        char slash;
+        int num;
+        int den;
         bool valid = false;
 
         while (!valid)
         {
             cout << ">> ";
-            cin >> fractions[i].wholeNumber >> bar >> fracString;
-
-            valid = checkInput(fracString);
-
-            if (!valid)
+            if (cin >> fractions[i].wholeNumber >> bar >> num >> slash >> den)
             {
-                cout << "Invalid fraction format. Please use n/d (e.g. 3/4)." << endl;
+                valid = checkFractionParts(bar, slash, den);
+                if (valid)
+                {
+                    fractions[i].numerator   = num;
+                    fractions[i].denominator = den;
+                    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                }
+                else
+                {
+                    cout << "Invalid fraction format. Use: whole | numerator/denominator (e.g. 2 | 3/4 or 2 | 3 / 4)." << endl;
+                    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                }
+            }
+            else
+            {
+                cout << "Invalid input. Use: whole | numerator/denominator (e.g. 2 | 3/4)." << endl;
+                cin.clear();
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
             }
         }
-
-        int slashPos = fracString.find('/');
-        fractions[i].numerator   = stoi(fracString.substr(0, slashPos));
-        fractions[i].denominator = stoi(fracString.substr(slashPos + 1));
     }
 }
 
 
-//----------------------------------------------------------
-// Validates that the fraction string is in the format "n/d"
-//----------------------------------------------------------
+//---------------------------------------------------------------
+// Validates bar, slash, and denominator after tokenized >> reads
+//---------------------------------------------------------------
 
-bool checkInput(string input)
+bool checkFractionParts(char bar, char slash, int denominator)
 {
-    while (input.empty())
-    {
-        cout << "Please enter a valid input." << endl;
-        cout << ">> ";
-        cin >> input;
-    }
-
-    int slashPos = input.find('/');
-    if (slashPos == string::npos)
-    {
-        return false;
-    }
-
-    string left  = input.substr(0, slashPos);
-    string right = input.substr(slashPos + 1);
-
-    if (left.empty() || right.empty())
-    {
-        return false;
-    }
-
-    for (char c : left)
-    {
-        if (!isdigit(c)) return false;
-    }
-
-    for (char c : right)
-    {
-        if (!isdigit(c)) return false;
-    }
-
-    return true;
+    return bar == '|' && slash == '/' && denominator != 0;
 }
 
 
@@ -179,49 +160,19 @@ int FractionList::getSize() const
 
 void display(FractionList list, fraction ans, int op)
 {
-    if (op == ADD)
-    {
-        cout << "Sum:     ";
-    }
-    else
-    {
-        cout << "Product: ";
-    }
+    cout << (op == ADD ? "Sum:     " : "Product: ");
 
     for (int i = 0; i < list.getSize(); i++)
     {
         fraction f = list.getFraction(i);
 
-        if (f.wholeNumber != 0)
-        {
-            cout << f.wholeNumber;
-        }
-
-        cout << "(" << f.numerator << "/" << f.denominator << ")";
-
-        if (i != list.getSize() - 1)
-        {
-            if (op == ADD)
-            {
-                cout << " + ";
-            }
-            else
-            {
-                cout << " x ";
-            }
-        }
-        else
-        {
-            cout << " = ";
-        }
+        (f.wholeNumber != 0 ? cout << f.wholeNumber : cout)
+            << "(" << f.numerator << "/" << f.denominator << ")"
+            << (i != list.getSize() - 1 ? (op == ADD ? " + " : " x ") : " = ");
     }
 
-    if (ans.wholeNumber != 0)
-    {
-        cout << ans.wholeNumber;
-    }
-
-    cout << "(" << ans.numerator << "/" << ans.denominator << ")" << endl;
+    (ans.wholeNumber != 0 ? cout << ans.wholeNumber : cout)
+        << "(" << ans.numerator << "/" << ans.denominator << ")" << endl;
 }
 
 
@@ -250,3 +201,51 @@ int LCM(int a, int b)
 {
     return (a / GCD(a, b)) * b;
 }
+
+
+//In case the display function was too hard to read, here's the same function but without ternaries
+// void display(FractionList list, fraction ans, int op)
+// {
+//     if (op == ADD)
+//     {
+//         cout << "Sum:     ";
+//     }
+//     else
+//     {
+//         cout << "Product: ";
+//     }
+
+//     for (int i = 0; i < list.getSize(); i++)
+//     {
+//         fraction f = list.getFraction(i);
+
+//         if (f.wholeNumber != 0)
+//         {
+//             cout << f.wholeNumber;
+//         }
+
+//         cout << "(" << f.numerator << "/" << f.denominator << ")";
+
+//         if (i != list.getSize() - 1)
+//         {
+//             if (op == ADD)
+//             {
+//                 cout << " + ";
+//             }
+//             else
+//             {
+//                 cout << " x ";
+//             }
+//         }
+//         else
+//         {
+//             cout << " = ";
+//         }
+//     }
+
+//     if (ans.wholeNumber != 0)
+//     {
+//         cout << ans.wholeNumber;
+//     }
+
+//     cout << "(" << ans.numerator << "/" << ans.denominator << ")" << endl;
