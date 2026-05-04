@@ -1,7 +1,6 @@
 #include <iostream>
 #include <string>
-#include <vector>
-#include "addFunctions.cpp"
+#include "add.h"
 using namespace std;
 
 //------------------------------------------------------------------
@@ -10,11 +9,11 @@ using namespace std;
 
 int main()
 {
-    fraction inputs[MAX_SIZE];
-    getInput(inputs);
-    fraction sum = add(inputs);
-    fraction product = multiply(inputs);
-    display(inputs, sum, ADD);
-    display(inputs, product, MULTIPLY);
+    FractionList list;
+    list.getInput();
+    fraction sum = list.add();
+    fraction product = list.multiply();
+    display(list, sum, ADD);
+    display(list, product, MULTIPLY);
     return 0;
-}
+}   

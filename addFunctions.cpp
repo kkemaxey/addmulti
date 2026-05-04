@@ -7,39 +7,39 @@ using namespace std;
 // Reads MAX_SIZE fractions from the user in the format: whole | n/d
 //------------------------------------------------------------------
 
-void getInput(fraction arr[])
+void FractionList::getInput()
 {
-    cout << "Enter " << MAX_SIZE << " fractions (format: whole | numerator/denominator):" << endl;
-    
-    for (int i = 0; i < MAX_SIZE; i++)
+    cout << "Enter " << size << " fractions (format: whole | numerator/denominator):" << endl;
+
+    for (int i = 0; i < size; i++)
     {
         char bar;
         string fracString;
         bool valid = false;
-        
+
         while (!valid)
         {
             cout << ">> ";
-            cin >> arr[i].wholeNumber >> bar >> fracString;
-            
+            cin >> fractions[i].wholeNumber >> bar >> fracString;
+
             valid = checkInput(fracString);
-            
+
             if (!valid)
             {
                 cout << "Invalid fraction format. Please use n/d (e.g. 3/4)." << endl;
             }
         }
-        
+
         int slashPos = fracString.find('/');
-        arr[i].numerator   = stoi(fracString.substr(0, slashPos));
-        arr[i].denominator = stoi(fracString.substr(slashPos + 1));
+        fractions[i].numerator   = stoi(fracString.substr(0, slashPos));
+        fractions[i].denominator = stoi(fracString.substr(slashPos + 1));
     }
 }
 
 
-//------------------------------------------------------------------
+//----------------------------------------------------------
 // Validates that the fraction string is in the format "n/d"
-//------------------------------------------------------------------
+//----------------------------------------------------------
 
 bool checkInput(string input)
 {
@@ -87,38 +87,31 @@ bool checkInput(string input)
 // 5. Simplify via GCD
 //------------------------------------------------------------------
 
-fraction add(fraction arr[])
+fraction FractionList::add()
 {
     fraction sum;
-
-    // Step 1: sum whole number parts
-    for (int i = 0; i < MAX_SIZE; i++)
+    for (int i = 0; i < size; i++)
     {
-        sum.wholeNumber += arr[i].wholeNumber;
+        sum.wholeNumber += fractions[i].wholeNumber;
     }
 
-    // Step 2: find LCD across all denominators
-    int lcd = arr[0].denominator;
-    for (int i = 1; i < MAX_SIZE; i++)
+    int lcd = fractions[0].denominator;
+    for (int i = 1; i < size; i++)
     {
-        lcd = LCM(lcd, arr[i].denominator);
+        lcd = LCM(lcd, fractions[i].denominator);
     }
     sum.denominator = lcd;
 
-    // Step 3: convert each fraction to LCD and sum numerators
-    for (int i = 0; i < MAX_SIZE; i++)
+    for (int i = 0; i < size; i++)
     {
-        sum.numerator += arr[i].numerator * (lcd / arr[i].denominator);
+        sum.numerator += fractions[i].numerator * (lcd / fractions[i].denominator);
     }
 
-    // Step 4: carry overflow into whole number
     if (sum.numerator >= sum.denominator)
     {
         sum.wholeNumber += sum.numerator / sum.denominator;
         sum.numerator    = sum.numerator % sum.denominator;
     }
-
-    // Step 5: simplify
     int g = GCD(sum.numerator, sum.denominator);
     sum.numerator   /= g;
     sum.denominator /= g;
@@ -135,18 +128,17 @@ fraction add(fraction arr[])
 // 4. Simplify via GCD
 //------------------------------------------------------------------
 
-fraction multiply(fraction arr[])
+fraction FractionList::multiply()
 {
     fraction product;
-
     int numerator   = 1;
     int denominator = 1;
 
-    for (int i = 0; i < MAX_SIZE; i++)
+    for (int i = 0; i < size; i++)
     {
-        int improperNumerator = arr[i].wholeNumber * arr[i].denominator + arr[i].numerator;
+        int improperNumerator = fractions[i].wholeNumber * fractions[i].denominator + fractions[i].numerator;
         numerator   *= improperNumerator;
-        denominator *= arr[i].denominator;
+        denominator *= fractions[i].denominator;
     }
 
     product.wholeNumber = numerator / denominator;
@@ -161,11 +153,31 @@ fraction multiply(fraction arr[])
 }
 
 
+//----------------------------------------
+// Returns the fraction at the given index
+//----------------------------------------
+
+fraction FractionList::getFraction(int i) const 
+{ 
+    return fractions[i]; 
+}
+
+
+//--------------------------------------
+// Returns the size of the fraction list
+//--------------------------------------
+
+int FractionList::getSize() const 
+{ 
+    return size; 
+}
+
+
 //----------------------------------------------------------------------------------------------------
 // This will take in the fractions, the answer, and the operation and display it in the correct format
 //----------------------------------------------------------------------------------------------------
 
-void display(fraction arr[], fraction ans, int op)
+void display(FractionList list, fraction ans, int op)
 {
     if (op == ADD)
     {
@@ -176,17 +188,18 @@ void display(fraction arr[], fraction ans, int op)
         cout << "Product: ";
     }
 
-    for (int i = 0; i < MAX_SIZE; i++)
+    for (int i = 0; i < list.getSize(); i++)
     {
-        // display whole number only if non-zero
-        if (arr[i].wholeNumber != 0)
+        fraction f = list.getFraction(i);
+
+        if (f.wholeNumber != 0)
         {
-            cout << arr[i].wholeNumber;
+            cout << f.wholeNumber;
         }
 
-        cout << "(" << arr[i].numerator << "/" << arr[i].denominator << ")";
+        cout << "(" << f.numerator << "/" << f.denominator << ")";
 
-        if (i != MAX_SIZE - 1)
+        if (i != list.getSize() - 1)
         {
             if (op == ADD)
             {
@@ -212,9 +225,9 @@ void display(fraction arr[], fraction ans, int op)
 }
 
 
-//------------------------------------------------------------------
+//--------------------------------------------------------------
 // Recursively finds the greatest common divisor of two integers
-//------------------------------------------------------------------
+//--------------------------------------------------------------
 
 int GCD(int a, int b)
 {
@@ -229,9 +242,9 @@ int GCD(int a, int b)
 }
 
 
-//------------------------------------------------------------------
+//----------------------------------------------------------
 // Finds the least common multiple of two integers using GCD
-//------------------------------------------------------------------
+//----------------------------------------------------------
 
 int LCM(int a, int b)
 {
